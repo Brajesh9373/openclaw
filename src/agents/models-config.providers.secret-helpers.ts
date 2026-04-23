@@ -197,6 +197,10 @@ export function normalizeConfiguredProviderApiKey(params: {
   profileApiKey: ProfileApiKeyResolution | undefined;
   secretRefManagedProviders?: Set<string>;
 }): ProviderConfig {
+  // Array apiKey is handled at runtime by model-auth.ts rotation; skip normalization here
+  if (Array.isArray(params.provider.apiKey)) {
+    return params.provider;
+  }
   const configuredApiKey = params.provider.apiKey;
   const configuredApiKeyRef = resolveSecretInputRef({
     value: configuredApiKey,
@@ -277,7 +281,9 @@ export function resolveMissingProviderApiKey(params: {
   providerApiKeyResolver?: (env: NodeJS.ProcessEnv) => string | undefined;
 }): ProviderConfig {
   const hasModels = Array.isArray(params.provider.models) && params.provider.models.length > 0;
-  const normalizedApiKey = normalizeOptionalSecretInput(params.provider.apiKey);
+  const normalizedApiKey = Array.isArray(params.provider.apiKey)
+    ? (params.provider.apiKey as unknown[]).length > 0 ? "array" : undefined
+    : normalizeOptionalSecretInput(params.provider.apiKey);
   const hasConfiguredApiKey = Boolean(normalizedApiKey || params.provider.apiKey);
   if (!hasModels || hasConfiguredApiKey) {
     return params.provider;

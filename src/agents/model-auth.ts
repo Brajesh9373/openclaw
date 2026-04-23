@@ -4,7 +4,7 @@ import { formatCliCommand } from "../cli/command-format.js";
 import { getRuntimeConfigSnapshot } from "../config/config.js";
 import type { ModelProviderAuthMode, ModelProviderConfig } from "../config/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
-import { coerceSecretRef } from "../config/types.secrets.js";
+import { coerceSecretRef, type SecretInput } from "../config/types.secrets.js";
 import { getShellEnvAppliedKeys } from "../infra/shell-env.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import {
@@ -74,6 +74,13 @@ export function getCustomProviderApiKey(
   provider: string,
 ): string | undefined {
   const entry = resolveProviderConfig(cfg, provider);
+  // Handle array of API keys — return first non-empty key for display/status paths
+  if (Array.isArray(entry?.apiKey)) {
+    const first = (entry.apiKey as SecretInput[])
+      .map((k) => (typeof k === "string" ? k.trim() : ""))
+      .find(Boolean);
+    return first || undefined;
+  }
   const literal = normalizeOptionalSecretInput(entry?.apiKey);
   if (literal) {
     return literal;
@@ -110,12 +117,54 @@ function canResolveEnvSecretRefInReadOnlyPath(params: {
   return !allowlist || allowlist.includes(params.id);
 }
 
+export function collectCustomProviderApiKeysForRotation(params: {
+  cfg: OpenClawConfig | undefined;
+  provider: string;
+}): string[] {
+  const customProviderConfig = resolveProviderConfig(params.cfg, params.provider);
+  
+  if (Array.isArray(customProviderConfig?.apiKey)) {
+    return customProviderConfig.apiKey
+      .map((key) => normalizeOptionalSecretInput(key))
+      .filter(Boolean) as string[];
+  }
+  
+  const singleKey = getCustomProviderApiKey(params.cfg, params.provider);
+  return singleKey ? [singleKey] : [];
+}
+
+function resolveArrayApiKeyWithRotation(
+  apiKeys: SecretInput[],
+  provider: string,
+): ResolvedCustomProviderApiKey | null {
+  // Convert SecretInput array to string array, filtering out empty values
+  const stringKeys = apiKeys
+    .map((key) => normalizeOptionalSecretInput(key))
+    .filter(Boolean) as string[];
+  
+  if (stringKeys.length === 0) {
+    return null;
+  }
+  
+  // Return first available key - actual rotation happens at execution time
+  return { 
+    apiKey: stringKeys[0], 
+    source: `models.json array[0] (${stringKeys.length} keys available)` 
+  };
+}
+
 export function resolveUsableCustomProviderApiKey(params: {
   cfg: OpenClawConfig | undefined;
   provider: string;
   env?: NodeJS.ProcessEnv;
 }): ResolvedCustomProviderApiKey | null {
   const customProviderConfig = resolveProviderConfig(params.cfg, params.provider);
+  
+  // Handle array of API keys with rotation
+  if (Array.isArray(customProviderConfig?.apiKey)) {
+    return resolveArrayApiKeyWithRotation(customProviderConfig.apiKey, params.provider);
+  }
+  
   const apiKeyRef = coerceSecretRef(customProviderConfig?.apiKey);
   if (apiKeyRef) {
     if (apiKeyRef.source !== "env") {
@@ -223,6 +272,9 @@ function isLocalBaseUrl(baseUrl: string): boolean {
 }
 
 function hasExplicitProviderApiKeyConfig(providerConfig: ModelProviderConfig): boolean {
+  if (Array.isArray(providerConfig.apiKey)) {
+    return providerConfig.apiKey.length > 0;
+  }
   return (
     normalizeOptionalSecretInput(providerConfig.apiKey) !== undefined ||
     coerceSecretRef(providerConfig.apiKey) !== null
