@@ -1,0 +1,23 @@
+{
+  "id": "monitoring-auto-start",
+  "name": "Monitoring Auto-Start",
+  "description": "Automatically starts activity monitoring and log collection when OpenClaw gateway starts",
+  "version": "1.0.0",
+  "author": "OpenClaw",
+  "license": "MIT",
+  "main": "index.ts",
+  "hooks": [
+    "gateway_start"
+  ],
+  "keywords": [
+    "monitoring",
+    "logging",
+    "auto-start",
+    "gateway",
+    "activity"
+  ],
+  "dependencies": {},
+  "openclaw": {
+    "minVersion": "2024.1.0"
+  }
+}

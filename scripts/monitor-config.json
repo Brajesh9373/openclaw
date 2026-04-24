@@ -1,0 +1,24 @@
+{
+  "monitor": {
+    "interval": 30000,
+    "maxLogEntries": 1000,
+    "idleThreshold": 300000,
+    "alertOnIdle": true
+  },
+  "alerts": {
+    "memoryThreshold": 500,
+    "idleTimeThreshold": 600000,
+    "enableDesktopNotifications": false,
+    "enableConsoleAlerts": true
+  },
+  "logging": {
+    "logPath": "~/.openclaw/activity-monitor.json",
+    "enableDebugLogs": false,
+    "rotateLogsDaily": true
+  },
+  "dashboard": {
+    "refreshInterval": 5000,
+    "defaultHistoryHours": 24,
+    "showResourceGraphs": true
+  }
+}

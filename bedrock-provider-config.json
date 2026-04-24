@@ -1,0 +1,33 @@
+[
+  {
+    "path": "models.providers.bedrock-openai-compat.baseUrl",
+    "value": "${OPENAI_BASE_URL}"
+  },
+  {
+    "path": "models.providers.bedrock-openai-compat.apiKey",
+    "value": "${OPENAI_API_KEY}"
+  },
+  {
+    "path": "models.providers.bedrock-openai-compat.api",
+    "value": "openai-completions"
+  },
+  {
+    "path": "models.providers.bedrock-openai-compat.models",
+    "value": [
+      {
+        "id": "openai.gpt-oss-120b",
+        "name": "OpenAI GPT OSS 120B (Bedrock)",
+        "reasoning": false,
+        "input": ["text"],
+        "contextWindow": 128000,
+        "maxTokens": 4096,
+        "cost": {
+          "input": 0.01,
+          "output": 0.03,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        }
+      }
+    ]
+  }
+]

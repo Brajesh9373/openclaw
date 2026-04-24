@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto-start Activity Monitor",
+  "description": "Automatically starts the activity monitor when an agent execution begins to track system activity and idle states",
+  "version": "1",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "node scripts/activity-monitor.ts start &",
+    "timeout": 60
+  },
+  "workspaceFolderName": "openclaw",
+  "shortName": "activity-monitor-start"
+}
